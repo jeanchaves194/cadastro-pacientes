@@ -1,0 +1,9 @@
+# Ignorar pastas de dependências
+backend/node_modules/
+frontend/node_modules/
+
+# Ignorar banco de dados local
+backend/pacientes.db
+
+# Logs
+*.log

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Pacientes com Vue.js</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef6fa;
+      padding: 30px;
+    }
+
+    h1, h2 {
+      color: #2c3e50;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    .btn {
+      display: flex;
+      margin: 5px;
+      gap: 8px ;
+    }
+    .btn-editar{
+      background-color: #3498db;
+    }
+    .btn-editar:hover{
+      background-color: #0056b3;
+
+    }
+    
+    .btn-excluir{
+      
+      background-color: #de1717;
+    }
+     .btn-excluir:hover {
+      background-color: darkred;
+    }
+
+    
+    button {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #1e7e34;
+    }
+
+    ul {
+      margin-top: 20px;
+      padding: 0;
+    }
+
+    li {
+      list-style: none;
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 5px solid #3498db;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Cadastro de Pacientes</h1>
+
+    <div class="form-group">
+      <input v-model="nome" placeholder="Nome do paciente" />
+    </div>
+    <div class="form-group">
+      <input v-model="idade" placeholder="Idade" type="number" />
+    </div>
+    <div class="form-group">
+      <input v-model="telefone" placeholder="Telefone" />
+    </div>
+    <div class="form-group">
+      <input v-model="endereco" placeholder="Endereço" />
+    </div>
+    <div class="form-group">
+      <select v-model="sexo">
+        <option disabled value="">Selecione o sexo</option>
+        <option>Masculino</option>
+        <option>Feminino</option>
+        <option>Outro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <input v-model="sintomas" placeholder="Sintomas" />
+    </div>
+
+    <button @click="salvar">{{ editandoId ? 'Atualizar' : 'Cadastrar' }}</button>
+
+    <h2>Pacientes Cadastrados</h2>
+    <div class="form-group">
+      <input v-model="filtro" placeholder="🔍 Pesquisar por nome..." />
+    </div>
+    <ul>
+      <li v-for="(paciente, index) in pacientesFiltrados" :key="index">
+        <strong>{{ paciente.nome }}</strong>, {{ paciente.idade }} anos<br>
+        Telefone: {{ paciente.telefone }}<br>
+        Endereço: {{ paciente.endereco }}<br>
+        Sexo: {{ paciente.sexo }}<br>
+        Sintomas: {{ paciente.sintomas }}
+
+        <div class="btn">
+          <button @click="prepararEdicao(paciente)" class="btn-editar">Editar</button>
+          <button @click="excluir(paciente.id)" class="btn-excluir">Excluir</button>
+        </div>
+      </li>
+      
+    </ul>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          nome: '',
+          idade: '',
+          telefone: '',
+          endereco: '',
+          sexo: '',
+          sintomas: '',
+          filtro: '',
+          pacientes: [],
+          editandoId: null,
+        };
+      },
+      computed: {
+        pacientesFiltrados() {
+          const termo = this.filtro.toLowerCase();
+          return this.pacientes.filter(p =>
+            p.nome.toLowerCase().includes(termo)
+          );
+        }
+      },
+      methods: {
+        carregarPacientes(){
+            fetch(`http://localhost:3000/pacientes`).then(res => res.json()).then(data => this.pacientes = data);
+        },
+
+        salvar() {
+          if (this.nome && this.idade && this.telefone && this.endereco && this.sexo && this.sintomas) {
+            const paciente = {
+              nome: this.nome,
+              idade: this.idade,
+              telefone: this.telefone,
+              endereco: this.endereco,
+              sexo: this.sexo,
+              sintomas: this.sintomas
+            };
+
+            if (this.editandoId) {
+                // PUT - Ação de atualizar cadastro
+                fetch(`http://localhost:3000/pacientes/${this.editandoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paciente)
+                }).then(() => {
+                    this.carregarPacientes();
+                    this.limparFormulario();
+                });
+
+            } else {
+                // POST - Cadastrar paciente
+                fetch(`http://localhost:3000/pacientes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paciente)
+                }).then(() => {
+                    this.carregarPacientes();
+                    this.limparFormulario();
+                });
+            }
+          } else {
+            alert('Por favor, preencha todos os campos.');
+          }
+        },
+
+        prepararEdicao(paciente) {
+            this.nome = paciente.nome;
+            this.idade = paciente.idade;
+            this.telefone =  paciente.telefone;
+            this.endereco =  paciente.endereco;
+            this.sexo =  paciente.sexo;
+            this.sintomas =  paciente.sintomas;
+            this.editandoId =  paciente.id;
+        },
+
+        excluir(pacienteId) {
+            if (confirm('Deseja excluir este paciente?')) {
+                fetch(`http://localhost:3000/pacientes/${pacienteId}`, {
+                    method: 'DELETE'
+                }).then(() => {
+                    this.carregarPacientes();
+                });
+            }
+        },
+
+        limparFormulario() {
+            this.nome = '';
+            this.idade = '';
+            this.telefone =  '';
+            this.endereco =  '';
+            this.sexo =  '';
+            this.sintomas =  '';
+            this.filtro =  '';
+            this.editandoId =  null;
+        }
+      },
+      mounted() {
+        this.carregarPacientes();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
