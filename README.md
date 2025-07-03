@@ -21,7 +21,7 @@ backend em Node.js usando SQLite como banco de dados.
 ### Clone o repositório:
 
 ```bash
-git clone https://github.com/SEU_USUARIO/cadastro-pacientes.git
+git clone https://github.com/jeanchaves194/cadastro-pacientes.git
 cd cadastro-pacientes
 ```
 
